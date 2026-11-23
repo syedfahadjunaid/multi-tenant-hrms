@@ -1,0 +1,66 @@
+spring:
+  application:
+    name: bff
+  config:
+    # Lets you run the app from your IDE using the same .env file Docker Compose uses.
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:../../.env[.properties]
+  threads:
+    virtual:
+      enabled: true          # cheap blocking I/O per request, like core-service
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:${REDIS_HOST_PORT:16379}}
+      password: ${REDIS_PASSWORD:}
+  session:
+    # Matches Keycloak's SSO idle timeout (30 minutes): the BFF session never outlives the
+    # Keycloak session it depends on by much.
+    timeout: 30m
+    data:
+      redis:
+        namespace: hrms:bff:session
+
+server:
+  port: 8080
+  # Redirects such as "go to / after sign-in" stay relative, so they work behind nginx
+  # (http://localhost:5280) and the Vite dev server alike.
+  tomcat:
+    use-relative-redirects: true
+  servlet:
+    session:
+      cookie:
+        # Not the default "SESSION": cookies on localhost are shared across ports, so other
+        # local apps could collide with a generic name.
+        name: HRMS_SESSION
+        http-only: true      # JavaScript can't read it, so an XSS bug can't steal the session
+        # Lax, not Strict: the cookie must come along when Keycloak redirects the browser back
+        # to /login/oauth2/code/keycloak (a cross-site, top-level navigation).
+        same-site: lax
+        secure: ${BFF_COOKIE_SECURE:false}   # set true wherever the app is served over HTTPS
+  error:
+    include-stacktrace: never
+    include-message: never
+
+management:
+  server:
+    port: 8081               # health/metrics on a separate port that is never published
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+hrms:
+  bff:
+    public-url: ${BFF_PUBLIC_URL:http://localhost:5280}
+    core-service-url: ${CORE_SERVICE_URL:http://localhost:8080}
+    keycloak:
+      issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/hrms}
+      backchannel-uri: ${KEYCLOAK_BACKCHANNEL_URI:http://localhost:8180/realms/hrms}
+      client-id: hrms-bff
+      client-secret: ${BFF_CLIENT_SECRET:}

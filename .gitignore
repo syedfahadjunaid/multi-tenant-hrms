@@ -1,0 +1,36 @@
+# Secrets
+.env
+
+# Java / Maven
+target/
+*.class
+*.log
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.cache/
+.coverage
+htmlcov/
+
+# Answer-quality eval output that a re-run regenerates (results.jsonl is the record)
+.claude/hillclimb/**/traces/
+.claude/hillclimb/**/judge/
+.claude/hillclimb/**/report.html
+.claude/hillclimb/**/state.json
+.claude/hillclimb/**/trajectory/
+
+# Node / web
+node_modules/
+dist/
+
+# IDEs / OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db

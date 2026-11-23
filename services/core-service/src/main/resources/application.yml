@@ -1,0 +1,75 @@
+spring:
+  application:
+    name: core-service
+  config:
+    # Lets you run the app from your IDE using the same .env file Docker Compose uses.
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:../../.env[.properties]
+  threads:
+    virtual:
+      enabled: true          # Java 21+ virtual threads: cheap blocking I/O per request
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:${POSTGRES_HOST_PORT:15432}/hrms}
+    username: ${DB_USERNAME:core_svc}
+    password: ${CORE_DB_PASSWORD:}
+  jpa:
+    open-in-view: false      # no lazy-loading surprises in controllers
+    hibernate:
+      ddl-auto: validate     # Flyway owns the schema; Hibernate only checks it matches
+    properties:
+      hibernate:
+        default_schema: core
+        # Discriminator multi-tenancy: every query on an entity with @TenantId is
+        # automatically filtered by the tenant from the caller's JWT.
+        tenant_identifier_resolver: com.hrms.core.tenant.TenantIdentifierResolver
+  flyway:
+    schemas: core
+    default-schema: core
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:${REDIS_HOST_PORT:16379}}
+      password: ${REDIS_PASSWORD:}
+    web:
+      pageable:
+        max-page-size: 100
+  mvc:
+    problemdetails:
+      enabled: true          # RFC 9457 error bodies
+
+server:
+  port: 8080
+  error:
+    include-stacktrace: never
+    include-message: never
+
+management:
+  server:
+    port: 8081               # health/metrics on a separate port that is never published publicly
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+hrms:
+  security:
+    issuer-uri: ${JWT_ISSUER_URI:http://localhost:8180/realms/hrms}
+    jwk-set-uri: ${JWT_JWK_SET_URI:http://localhost:8180/realms/hrms/protocol/openid-connect/certs}
+    audience: hrms-api
+  ai:
+    base-url: ${AI_SERVICE_URL:http://localhost:8000}
+    connect-timeout: 2s
+    read-timeout: 60s
+  rate-limit:
+    requests-per-minute: 120
+    assistant-requests-per-minute: 10
+  cors:
+    allowed-origins:
+      - http://localhost:5280
+  leave:
+    annual-allowance-days: 25

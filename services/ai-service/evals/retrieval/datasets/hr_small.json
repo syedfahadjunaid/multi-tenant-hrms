@@ -1,0 +1,76 @@
+{
+  "description": "Retrieval evaluation for the HR policy assistant. Questions are deliberately phrased in everyday words that differ from the documents' wording, plus questions no document answers (expected: null).",
+  "documents": [
+    {
+      "title": "Annual leave policy",
+      "content": "Full-time employees receive 25 days of paid annual leave per calendar year, in addition to public holidays. Part-time employees receive a pro-rata amount based on their contracted hours.\n\nRequests for absences longer than three days must be submitted in the HRMS at least two weeks in advance. Requests are approved first by your line manager and then by HR.\n\nUp to 5 unused days can be carried over into the first quarter of the following year; any remaining days expire. Untaken days are only paid out when employment ends."
+    },
+    {
+      "title": "Sick leave policy",
+      "content": "If you are unwell, notify your manager before 10:00 on the first day of absence. You may self-certify for up to three consecutive working days. From the fourth day of absence a doctor's note is required.\n\nSick leave is paid at full salary for up to 20 working days per year. Record each absence as sick leave in the HRMS, even if you only record it after you return."
+    },
+    {
+      "title": "Remote work policy",
+      "content": "Employees may work from home up to three days per week, as agreed with their manager. Core collaboration hours are 10:00 to 15:00 in your local time zone.\n\nYou must use the company VPN and a company-managed laptop when working outside the office.\n\nWorking from another country requires HR approval in advance, because of tax and legal implications."
+    },
+    {
+      "title": "Parental leave policy",
+      "content": "Birthing parents are entitled to 26 weeks of paid maternity leave. Partners and adoptive parents receive 6 weeks of paid parental leave, which can be taken at any point during the first year.\n\nNotify HR at least 8 weeks before the expected start date. Your role is protected while you are on parental leave."
+    },
+    {
+      "title": "Expense and travel policy",
+      "content": "Business expenses must be submitted within 30 days with an itemised receipt. Economy class is standard for flights under six hours; longer flights may be booked in premium economy.\n\nHotel costs are reimbursed up to 180 per night in major cities. Meals while travelling are covered up to 50 per day. Alcohol is not reimbursed.\n\nAny single expense above 500 needs pre-approval from your manager."
+    },
+    {
+      "title": "IT security policy",
+      "content": "Passwords must be at least 14 characters long and must never be reused. Multi-factor authentication is mandatory for email and all internal systems.\n\nReport lost or stolen devices to the IT service desk within one hour. Never share customer data through personal email or messaging apps.\n\nSuspected phishing emails must be reported with the Report button in your mail client."
+    },
+    {
+      "title": "Code of conduct",
+      "content": "We expect everyone to treat colleagues, customers and partners with respect. Harassment and discrimination of any kind are not tolerated.\n\nGifts or hospitality from suppliers worth more than 50 must be declared to the compliance team.\n\nConcerns can be raised confidentially through the whistleblowing hotline, without fear of retaliation."
+    },
+    {
+      "title": "Salary bands",
+      "content": "Engineering band E2 pays 70,000 to 90,000 per year. Band E3 (senior engineer) pays 90,000 to 120,000. Band E4 (staff engineer) pays 115,000 to 150,000.\n\nSalaries are reviewed every April based on performance and market data."
+    },
+    {
+      "title": "Learning and development policy",
+      "content": "Every employee has an annual learning budget of 1,500 for courses, conferences, books and certifications, and may use up to 5 working days per year for training. Requests are approved by your manager.\n\nIf you leave within 12 months of completing a course that cost more than 1,000, you may have to repay part of the cost."
+    }
+  ],
+  "questions": [
+    {"question": "How many vacation days do I get each year?", "expected": "Annual leave policy"},
+    {"question": "Can I carry over unused holiday to next year?", "expected": "Annual leave policy"},
+    {"question": "How far ahead do I need to book time off for a two-week trip?", "expected": "Annual leave policy"},
+    {"question": "Will I get paid for the holidays I didn't take?", "expected": "Annual leave policy"},
+    {"question": "I woke up with the flu, who do I tell and by when?", "expected": "Sick leave policy"},
+    {"question": "When do I need a medical certificate?", "expected": "Sick leave policy"},
+    {"question": "Do I still get paid while I'm ill?", "expected": "Sick leave policy"},
+    {"question": "Am I allowed to work from home on Fridays?", "expected": "Remote work policy"},
+    {"question": "Can I work from Spain for a month?", "expected": "Remote work policy"},
+    {"question": "Do I need the VPN when I work from a cafe?", "expected": "Remote work policy"},
+    {"question": "How long is maternity leave?", "expected": "Parental leave policy"},
+    {"question": "My wife is having a baby, how much time off do I get?", "expected": "Parental leave policy"},
+    {"question": "We are adopting a child, what leave can I take?", "expected": "Parental leave policy"},
+    {"question": "What's the hotel budget for a business trip to London?", "expected": "Expense and travel policy"},
+    {"question": "Can I fly business class to Tokyo?", "expected": "Expense and travel policy"},
+    {"question": "Will the company pay for wine at a client dinner?", "expected": "Expense and travel policy"},
+    {"question": "How long do I have to hand in my receipts?", "expected": "Expense and travel policy"},
+    {"question": "How long does my password need to be?", "expected": "IT security policy"},
+    {"question": "I left my laptop on the train, what should I do?", "expected": "IT security policy"},
+    {"question": "I got a suspicious email asking for my login details.", "expected": "IT security policy"},
+    {"question": "A vendor offered me concert tickets, can I accept them?", "expected": "Code of conduct"},
+    {"question": "How can I report bullying anonymously?", "expected": "Code of conduct"},
+    {"question": "What does a senior engineer earn?", "expected": "Salary bands"},
+    {"question": "When are pay rises decided?", "expected": "Salary bands"},
+    {"question": "Is there money for attending a conference?", "expected": "Learning and development policy"},
+    {"question": "Can I take days off to study for a certification exam?", "expected": "Learning and development policy"},
+    {"question": "Do I have to pay back a course if I resign?", "expected": "Learning and development policy"},
+    {"question": "Where can I park my car at the office?", "expected": null},
+    {"question": "When is the company Christmas party?", "expected": null},
+    {"question": "Who won the football match yesterday?", "expected": null},
+    {"question": "What's a good pizza place near the office?", "expected": null},
+    {"question": "How do I descale the coffee machine?", "expected": null},
+    {"question": "Is there a dress code?", "expected": null}
+  ]
+}

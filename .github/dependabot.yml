@@ -1,0 +1,39 @@
+# Automatic pull requests for outdated or vulnerable dependencies.
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: /services/core-service
+    schedule:
+      interval: weekly
+  - package-ecosystem: maven
+    directory: /services/bff
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directory: /services/bff
+    schedule:
+      interval: weekly
+  - package-ecosystem: pip
+    directory: /services/ai-service
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directory: /services/core-service
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directory: /services/ai-service
+    schedule:
+      interval: weekly
+  - package-ecosystem: npm
+    directory: /web
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker
+    directory: /web
+    schedule:
+      interval: weekly
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

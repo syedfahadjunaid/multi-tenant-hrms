@@ -1,0 +1,79 @@
+{
+  "description": "HR policy assistant: answer quality on hr_large.json (see services/ai-service/evals/answers/run.py)",
+  "metrics": [
+    {
+      "id": "correct",
+      "label": "correct",
+      "kind": "binary"
+    },
+    {
+      "id": "grounded",
+      "label": "grounded",
+      "kind": "binary"
+    },
+    {
+      "id": "cited",
+      "label": "cited",
+      "kind": "binary"
+    }
+  ],
+  "perf_fields": [
+    {
+      "id": "latency_s",
+      "label": "latency",
+      "unit": "s"
+    },
+    {
+      "id": "cost_usd",
+      "label": "cost",
+      "unit": "$"
+    },
+    {
+      "id": "in_tokens",
+      "label": "in tok"
+    },
+    {
+      "id": "out_tokens",
+      "label": "out tok"
+    },
+    {
+      "id": "answer_words",
+      "label": "words"
+    },
+    {
+      "id": "refused",
+      "label": "refused"
+    },
+    {
+      "id": "fallback",
+      "label": "fallback"
+    }
+  ],
+  "prices": {
+    "claude-opus-5-5": {
+      "in": 4.0,
+      "out": 20.0,
+      "cache_read": 0.2,
+      "cache_write": 5.0
+    },
+    "claude-sonnet-5-5": {
+      "in": 2.0,
+      "out": 10.0,
+      "cache_read": 0.1,
+      "cache_write": 2.5
+    },
+    "claude-haiku-5-5": {
+      "in": 0.1,
+      "out": 0.5,
+      "cache_read": 0.01,
+      "cache_write": 0.125
+    }
+  },
+  "harness_paths": [
+    "evals/answers/run.py",
+    "evals/answers/judge.py",
+    "evals/retrieval/run.py",
+    "evals/retrieval/datasets/hr_large.json",
+    "pyproject.toml"
+  ]
+}
