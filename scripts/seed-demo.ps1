@@ -2,7 +2,8 @@
 .SYNOPSIS
     Loads demo data through the public API (no direct database access):
     employee records for the demo Keycloak users, so they can use the leave workflow,
-    and the reporting line bob -> mark. With -Documents, also two HR policy documents.
+    and the reporting line bob -> mark. With -Documents, also the nine HR policy documents
+    from services/ai-service/evals/retrieval/datasets/hr_small.json.
 
     Safe to run more than once: employees that already exist are skipped.
     (Documents have no duplicate check, so pass -Documents only once.)

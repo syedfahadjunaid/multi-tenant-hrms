@@ -30,7 +30,8 @@ code and fix the doc.
    RFC 9457 errors.
 2. AI policy assistant: document ingestion, permission-aware retrieval (pgvector), Claude
    answers with citations, PII redaction, prompt-injection escaping, offline mode.
-3. React frontend: role-aware navigation, employee directory, assistant page.
+3. React frontend: role-aware navigation, employee directory, leave requests + approvals,
+   assistant page.
 4. Leave workflow: employee → manager → HR approvals with history and balances; editable
    reporting lines, with loop detection and approvals that follow the new manager.
 5. Retrieval quality: real embeddings (bge-small); reranker and hybrid search built but off
@@ -75,84 +76,54 @@ code and fix the doc.
     - prompt-injection cases for the answer eval (policies containing hostile instructions);
     - questions from real users, once there are any.
 
-## Run it on a new machine
-
-This also works from a zip of the project, which leaves out `.env`, `node_modules`, `.venv`,
-`target`, `dist`, caches and eval output. Docker rebuilds all of them, or the setup commands
-below do.
-
-**Prerequisites**
-- **Docker Desktop** with Compose v2. Give Docker about 8 GB of RAM: Keycloak, Postgres and
-  three app services run at once. Images need about 6 GB of disk.
-- Nothing else just to run the app: Java, Node and Python all build inside Docker.
-- **Optional, for development:**
-  - JDK 25 (Temurin) to run the Java services from an IDE;
-  - Node.js 24 for `npm run dev`;
-  - Python 3.12 for the AI service and the evals;
-  - PowerShell for `scripts/*.ps1`: built in on Windows, `pwsh` 7 on macOS/Linux.
-- The first build needs internet access: Maven, npm, PyPI, Docker Hub, and Hugging Face for
-  the embedding model baked into the ai-service image.
-
-**Steps** (from the project root):
-
-```powershell
-Copy-Item .env.example .env                   # dev values; add ANTHROPIC_API_KEY for real answers
-docker compose --profile app up -d --build    # first time: 5-10 minutes
-.\scripts\seed-demo.ps1 -Documents            # demo employees, reporting line, 2 policies (once)
-```
-
-Then open http://localhost:5280 and sign in as `alice`, `mark`, `bob` or `carol`. The
-password is in `infra/keycloak/hrms-realm.json`.
-
-**Ports:** the host needs 5280, 8090, 8080, 8000, 8180, 15432 and 16379 free.
-- Postgres and Redis ports are set in `.env` (`POSTGRES_HOST_PORT`, `REDIS_HOST_PORT`).
-- The others are in `docker-compose.yml`. 5280 is also Keycloak's redirect URI, so changing
-  it means changing the realm too.
-
-Keycloak imports the realm, including `BFF_CLIENT_SECRET` from `.env`, only on its first
-start. To start again from scratch: `docker compose down -v`.
-
-**Tests from a clean copy:**
-- **Java** (core-service, bff): the `docker run ... mvnw -B verify` command under "Run and
-  verify", or `.\mvnw.cmd verify` with a local JDK 25. Docker must be running for
-  Testcontainers.
-- **Python:** in `services/ai-service`, run:
-
-  ```powershell
-  python -m venv .venv
-  .\.venv\Scripts\pip install -e ".[dev]"
-  .\.venv\Scripts\python -m pytest
-  ```
-
-  The first eval run downloads the embedding model (about 70 MB) into a local cache.
-- **Web:** in `web/`, `npm ci`, then `npm test`, `npm run lint` and `npm run build`.
-
 ## Run and verify
 
 The dev machine is Windows (PowerShell 5.1 and Git Bash both available) with Docker Desktop.
-**There is no local JDK or Maven**, so Java is built and tested inside Docker.
+**There is no local JDK or Maven**, so Java is built and tested inside Docker. Clean copies
+(including zips) omit `.env`, `node_modules`, `.venv`, `target`, `dist`, caches and eval
+output; Docker rebuilds them, or the clean-copy steps below do (on Windows, `python` may
+point only to the Microsoft Store stub until Python 3.12 is installed).
+
+**Prerequisites**
+- **Docker Desktop** with Compose v2 (~8 GB RAM, ~6 GB disk; Keycloak, Postgres and three app
+  services run at once). Nothing else is needed just to run the stack; the first build needs
+  internet access for Maven, npm, PyPI, Docker Hub and Hugging Face (embedding model).
+- **Optional for local dev/tests outside Docker:** JDK 25 (Temurin), Node.js 24, Python 3.12,
+  PowerShell (`pwsh` 7 on macOS/Linux).
+
+**Start the stack** (from the project root):
 
 ```powershell
-Copy-Item .env.example .env                       # once; .env is git-ignored
-docker compose --profile app up -d --build        # everything; web on http://localhost:5280
-.\scripts\seed-demo.ps1 -Documents                # demo data (documents: run once)
+Copy-Item .env.example .env                   # once; git-ignored (add ANTHROPIC_API_KEY for Claude)
+docker compose --profile app up -d --build    # everything; web on http://localhost:5280 (5-10 min first time)
+.\scripts\seed-demo.ps1 -Documents            # demo employees, reporting line, 9 policies from hr_small.json (once)
 ```
+
+Keycloak imports `infra/keycloak/hrms-realm.json` (including `BFF_CLIENT_SECRET` from `.env`)
+only on its first start. To reset everything from scratch: `docker compose down -v`.
+
+**Clean-copy local test setup** (when running Python/web checks outside Docker):
+- **Python** (`services/ai-service`): `python -m venv .venv`, `.\.venv\Scripts\pip install -e ".[dev]"`
+  (first eval run downloads the ~70 MB embedding model into a local cache).
+- **Web** (`web/`): `npm ci`.
 
 | Service | Check before you call a change done |
 |---|---|
-| Java | `docker run --rm -v "${PWD}\services\core-service:/workspace" -v hrms-m2:/root/.m2 -v /var/run/docker.sock:/var/run/docker.sock -e TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal -w /workspace eclipse-temurin:25-jdk sh mvnw -B verify` (from the repo root; takes ~3-4 min, Testcontainers starts Postgres/Redis). Same command with `services\bff` for the BFF (~2 min; its flow tests use a fake Keycloak and fake core API) |
+| Java | `docker run --rm -v "${PWD}\services\core-service:/workspace" -v hrms-m2:/root/.m2 -v /var/run/docker.sock:/var/run/docker.sock -e TESTCONTAINERS_HOST_OVERRIDE=host.docker.internal -w /workspace eclipse-temurin:25-jdk sh mvnw -B verify` (from the repo root; ~3-4 min, Testcontainers starts Postgres/Redis; or `.\mvnw.cmd verify` with a local JDK 25). Same command with `services\bff` for the BFF (~2 min; fake Keycloak + fake core API) |
 | Python | In `services/ai-service`: `.\.venv\Scripts\python.exe -m pytest` (integration tests need Docker), `.\.venv\Scripts\ruff.exe check .`, `.\.venv\Scripts\ruff.exe format --check .` |
 | Retrieval quality | `python -m evals.retrieval.run` (add `--store postgres` when SQL changes; `--hybrid`, `--reranker <name>`, `--model <name>`, `--dataset small`, `--show-misses`) |
 | Answer quality | `python -m evals.answers.run` (**paid**, needs a key and the owner's OK; `--limit 5` pilot, `--variant v1 --effort low`, `--summary`). Offline: `pytest tests/test_answer_eval.py` |
 | Web | In `web/`: `npm test`, `npm run lint`, `npm run build` (includes `tsc`) |
 | Running stack | `docker compose --profile app up -d --build <service>`, then smoke-test with `. .\scripts\get-token.ps1 bob` and `Invoke-RestMethod` against `http://localhost:8080/api/...`. Auth or BFF changes: also sign in at http://localhost:5280 in a browser (an unauthenticated `GET :5280/api/me` must be 401) |
 
-Ports (deliberately non-standard: other local projects already hold 5432, 6379 and 5173):
-web **5280**, BFF **8090**, core **8080** (management/actuator 8081 in each Java service, not
-published), AI **8000**, Keycloak **8180**, Postgres **15432**, Redis **16379**. All bound to
-127.0.0.1. Before adding a port, check `Get-NetTCPConnection -State Listen -LocalPort <port>`.
+**Ports** (bound to 127.0.0.1; non-standard because other local projects hold 5432, 6379 and 5173):
+web **5280** (also Keycloak's redirect URI, so changing it means updating the realm), BFF **8090**,
+core **8080** (management/actuator **8081** in each Java service, not published), AI **8000**,
+Keycloak **8180**, Postgres **15432** (`POSTGRES_HOST_PORT` in `.env`), Redis **16379**
+(`REDIS_HOST_PORT` in `.env`). Before adding a port, check
+`Get-NetTCPConnection -State Listen -LocalPort <port>`.
 
-Demo users (realm `hrms`, password in the realm file, never repeat it in chat or docs):
+**Demo users** (realm `hrms`, password in `infra/keycloak/hrms-realm.json`, never repeat it in chat or docs):
 `alice` HR_ADMIN @acme, `mark` MANAGER @acme, `bob` EMPLOYEE @acme (reports to mark),
 `carol` HR_ADMIN @globex.
 
@@ -216,8 +187,9 @@ from the dev-only `hrms-dev-cli` client.
   `HRMS-XSRF-TOKEN` cookie); `apiFetch` adds it, and sign-out is a POST with it. Don't add
   CSRF exemptions.
 - The BFF fails closed: an unauthenticated `/api/**` call gets 401, never a redirect. No
-  token, or a rejected refresh, means 401 and the session is ended. Anything that isn't
-  `/api/**`, sign-in or sign-out is `denyAll`.
+  token, or a rejected refresh, means 401 and the session is ended. Apart from `/api/**`,
+  sign-in/sign-out, `/error` and actuator health/info/prometheus endpoints (on internal port
+  8081), everything is `denyAll`.
 - Redirect URIs come from `hrms.bff.public-url`, never from request headers. Post-login
   return paths go through `safeReturnTo`; sign-in/out redirects are de-duplicated by
   `leavingPage()`.
@@ -321,7 +293,8 @@ from the dev-only `hrms-dev-cli` client.
   `Invoke-RestMethod -Method Post` without a body sends a form content type (send JSON);
   console output is cp1252 (`run.py` calls `sys.stdout.reconfigure(errors="replace")`).
 - **Rate limit**: `/api/assistant/**` allows 10 requests per user per minute, which also
-  limits bulk document uploads.
+  limits bulk document uploads (`seed-demo.ps1 -Documents` uploads 9 policies, so running it
+  twice within a minute hits 429).
 - **Toy embedder in unit tests** (`HashingEmbedder`) collides words via hashing; pick test
   phrases whose scores you have checked.
 - The ms-marco rerankers score policy paragraphs ~0 but rank them well; that's why the
@@ -329,86 +302,8 @@ from the dev-only `hrms-dev-cli` client.
 
 ## Learning guide
 
-This codebase doubles as learning material. Read it in this order; each step builds on the
-one before. For the Java core service there is also a file-by-file reading list in the
-README ("Learning Java with this codebase").
-
-| # | Concept | What to understand | Read |
-|---|---|---|---|
-| 1 | The big picture | Which service does what, and how a request travels | README diagram, "Request flow" above |
-| 2 | Spring Boot basics | Beans, dependency injection, configuration records, profiles | `CoreServiceApplication.java`, `HrmsProperties.java`, `application.yml` |
-| 3 | REST + validation | Controllers, DTO records, Bean Validation, RFC 9457 error bodies | `EmployeeController.java`, `EmployeeDtos.java`, `GlobalExceptionHandler.java` |
-| 4 | JPA / Hibernate | Entities, repositories, transactions, why `open-in-view` is off | `Employee.java`, `EmployeeRepository.java`, `EmployeeService.java` |
-| 5 | Schema migrations | Flyway versions, constraints, triggers, composite foreign keys | `src/main/resources/db/migration/V1..V3` |
-| 6 | Multi-tenancy | One database, many companies: `@TenantId`, tenant from the token only | `TenantIdentifierResolver.java`, `CurrentUser.java` |
-| 7 | OAuth2 resource server | JWT signature/issuer/audience checks, mapping Keycloak roles | core `SecurityConfig.java`, `KeycloakRealmRoleConverter.java` |
-| 8 | Authorization | Role checks (`@PreAuthorize`) vs relationship checks; 404 vs 403 vs 409 vs 422 | `LeaveService.java`, `LeaveController.java` |
-| 9 | State machines | An enum with behaviour and an exhaustive `switch` | `LeaveStatus.java`, `LeaveStatusTests.java` |
-| 10 | Concurrency | Optimistic (`@Version`), pessimistic (`FOR UPDATE`) and advisory locks: when to use which | `LeaveRequest.java`, `EmployeeRepository.java`, `EmployeeService.java` |
-| 11 | Domain events + audit | Events in the same transaction; append-only audit with `Propagation.MANDATORY` | `ManagerChanged.java`, `AuditService.java` |
-| 12 | Rate limiting | A Redis fixed window in a servlet filter | `RateLimitFilter.java` |
-| 13 | Testing Java | Testcontainers, MockMvc with `jwt()`, a fresh tenant per test | `EmployeeApiTests.java`, `LeaveApiTests.java`, `TestUsers.java` |
-| 14 | OpenID Connect sign-in | Authorization code + PKCE, confidential vs public clients, ID / access / refresh tokens | bff `KeycloakClientConfig.java`, `infra/keycloak/hrms-realm.json` |
-| 15 | Backend-for-frontend | Server-side sessions in Redis, HttpOnly + SameSite cookies, CSRF double-submit, RP-initiated logout | bff `SecurityConfig.java`, `web/src/auth/session.ts` |
-| 16 | API gateway | Spring Cloud Gateway routes and filters, token relay, failing closed | `ApiRoutes.java`, `TokenRelay.java` |
-| 17 | Testing over real HTTP | Fake identity provider and fake backend on the JDK's HTTP server | `BffFlowTests.java`, `FakeKeycloak.java` |
-| 18 | Service-to-service trust | Relaying the user's token; the next service verifies it again | `AiClient.java`, `app/security.py` |
-| 19 | RAG basics | Chunking, embeddings, cosine similarity, pgvector, the "not found" cut-off | `chunking.py`, `embeddings.py`, `store.py`, `retrieval.py` |
-| 20 | Permission-aware retrieval | Filters inside the SQL, never after it | `PgVectorStore.search` and `keyword_search` in `store.py` |
-| 21 | Better retrieval | Postgres full-text search, reciprocal rank fusion, cross-encoder reranking | `store.py`, `retrieval.py`, `rerank.py` |
-| 22 | LLM integration | Anthropic SDK, `effort`, refusal fallback, `stop_reason`, offline mode | `app/llm.py`, `app/rag/service.py` |
-| 23 | AI safety | Prompt-injection fencing, PII redaction | `prompts.py`, `pii.py` |
-| 24 | Evaluating AI | hit@1, MRR, held-out accuracy, bootstrap CIs, paired comparisons; LLM-as-judge | `evals/retrieval/run.py`, `evals/answers/` |
-| 25 | React frontend | TanStack Query hooks, React Router, typed API client, Testing Library | `web/src/api/`, `web/src/pages/` |
-| 26 | Web security | CSP, nginx as the single origin, open-redirect guard | `web/nginx.conf`, `session.ts` |
-| 27 | Containers + CI | Multi-stage non-root images, layered jars, Compose profiles and health checks, GitHub Actions, Trivy | `Dockerfile`s, `docker-compose.yml`, `.github/` |
-
-**Glossary**
-- **OIDC (OpenID Connect):** sign-in built on OAuth2. Keycloak issues an *ID token* (who
-  you are), an *access token* (what you may call, 5 minutes) and a *refresh token* (gets new
-  access tokens).
-- **PKCE:** a one-time secret the client proves it holds when exchanging the login code, so
-  a stolen code is useless.
-- **Confidential client:** a client that can keep a secret (a server, like the BFF), unlike
-  a browser app.
-- **BFF (backend-for-frontend):** a server that holds the tokens for the browser and gives
-  it only a session cookie.
-- **CSRF:** another site making your browser send a request with your cookies. Blocked here
-  by requiring a header that only this origin can set.
-- **JWT / JWKS:** a signed token format, and the endpoint publishing the keys that check
-  the signature.
-- **Audience (`aud`):** which API a token is meant for (`hrms-api`).
-- **Tenant:** one customer company. All of its data carries its `tenant_id`.
-- **RBAC:** role-based access control (HR_ADMIN, MANAGER, EMPLOYEE).
-- **Optimistic lock:** detect a conflicting update afterwards with a version number.
-- **Pessimistic lock:** block others while you work (`SELECT … FOR UPDATE`).
-- **Advisory lock:** a named lock in Postgres that isn't tied to a row.
-- **Flyway:** versioned SQL migrations, applied in order, never edited.
-- **Testcontainers:** real databases in throwaway Docker containers during tests.
-- **ProblemDetail (RFC 9457):** a standard JSON error body.
-- **RAG (retrieval-augmented generation):** find relevant passages, then let the LLM answer
-  only from them.
-- **Embedding:** a vector capturing a text's meaning; similar texts get nearby vectors.
-- **pgvector / HNSW:** vectors in Postgres, and the index that searches them quickly.
-- **RRF:** reciprocal rank fusion, which merges two rankings.
-- **Cross-encoder:** a model that scores a question and a passage together; more accurate
-  and slower.
-- **hit@1 / MRR:** whether the right document is ranked first / mean reciprocal rank.
-- **Held-out accuracy:** a score on questions not used for tuning.
-- **Bootstrap CI:** a confidence interval from resampling the questions.
-- **LLM-as-judge:** a second model grading answers against a rubric.
-
-**Exercises** (each touches several layers; run the checks under "Run and verify" until green)
-1. Add a `phone` field to employees end to end: migration `V4__employee_phone.sql`, entity,
-   DTOs with validation, an API test, and the web form.
-2. Build the public-holiday calendar from "Left to build": a new tenant-scoped table with a
-   composite foreign key, HR-only endpoints, `WorkingDays` changes, and tests.
-3. Send an email when a leave request is approved, from an `AFTER_COMMIT` event listener,
-   with a test that uses a fake mail sender.
-4. In the BFF, add a test that a `PUT` without the CSRF header is refused. Then add
-   per-session rate limiting and test it in `BffFlowTests`.
-5. Add a new retrieval-eval slice (for example questions with typos). Write the decision
-   rule down first, run `python -m evals.retrieval.run`, and record the result.
+This codebase doubles as learning material; the reading order, glossary and hands-on exercises
+live in [`docs/LEARNING.md`](docs/LEARNING.md), and `README.md` has a Java file-by-file list.
 
 ## Definition of done
 
@@ -417,4 +312,5 @@ README ("Learning Java with this codebase").
 3. Schema changes: a new Flyway migration (core) or idempotent DDL in `init_schema()` (ai).
 4. The running stack is rebuilt and smoke-tested as a real user (`get-token.ps1`).
 5. README and this file updated if behaviour, commands, ports or decisions changed.
-6. Don't commit or push unless the owner asks.
+6. Don't commit or push unless the owner asks. `main` is protected on GitHub (PR required
+   with all 6 jobs in `.github/workflows/ci.yml` passing; no direct pushes or force pushes).

@@ -67,7 +67,7 @@ docker compose --profile app up -d --build
 
 The first start takes a few minutes (image downloads, Maven and npm builds). Then load the
 demo data: employee records for the demo users (so they can request leave), the reporting
-line bob → mark, and two HR policy documents.
+line bob → mark, and the nine HR policy documents from `hr_small.json`.
 
 ```powershell
 .\scripts\seed-demo.ps1 -Documents
@@ -439,6 +439,7 @@ Known gaps, deliberately left as next steps:
 ```
 .
 ├── AGENTS.md                   # operating manual for coding agents (CLAUDE.md imports it)
+├── docs/LEARNING.md            # layered learning guide, glossary, exercises
 ├── docker-compose.yml          # local stack (profiles: default = infra, "app" = + services)
 ├── .env.example                # copy to .env; all local secrets
 ├── infra/
@@ -517,5 +518,5 @@ Read the Java service in this order. Each file introduces a few concepts:
 
 A good habit: change something (add a `phone` field to `Employee`, end to end: migration
 `V4__…sql` (the next free number), entity, DTOs, test), run `.\mvnw.cmd verify`, and read the
-errors until it's green. AGENTS.md has a learning guide covering every layer (security, BFF,
-RAG, evals, web), a glossary, and more exercises.
+errors until it's green. [`docs/LEARNING.md`](docs/LEARNING.md) has a learning guide covering
+every layer (security, BFF, RAG, evals, web), a glossary, and more exercises.
